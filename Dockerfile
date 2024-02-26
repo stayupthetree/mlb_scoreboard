@@ -1,43 +1,34 @@
-# Use the official Debian slim image as the base image
-FROM python:3.9-slim-bookworm
-# Install system dependencies
+# Builder stage
+FROM python:3.9-slim-bookworm as builder
+
+# Install system and build dependencies
 RUN apt-get update && apt-get install -y \
     git \
-    python3 \
-    inotify-tools \
-    python3-pip \
-    python3-dev \
-    python3-venv \
     cmake \
     build-essential \
     libssl-dev \
     libffi-dev \
     libsdl2-dev \
-    python3-pillow \
-    python3-tk \
     libxml2-dev \
     libxslt-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Set the working directory in the container to /app
-WORKDIR /app
+# Set the working directory for the build stage
+WORKDIR /build
 
 # Clone the GitHub repository
 RUN git clone https://github.com/MLB-LED-Scoreboard/mlb-led-scoreboard.git
 
-# Change the working directory to the cloned repository's directory
-WORKDIR /app/mlb-led-scoreboard
-
-# Create a Python virtual environment and activate it
+# Set up a Python virtual environment
 RUN python3 -m venv venv
-ENV PATH="/app/mlb-led-scoreboard/venv/bin:$PATH"
+ENV PATH="/build/venv/bin:$PATH"
 
-# Install the specified Python packages
-RUN pip3 install wheel
-RUN pip3 install --no-cache-dir feedparser==6.0.10 'MLB_StatsAPI>=1.6.1' pyowm==3.3.0 'tzlocal==4.2' Pillow>=10.0.1
+# Install Python dependencies
+RUN pip install --no-cache-dir wheel \
+    && pip install --no-cache-dir feedparser==6.0.10 'MLB_StatsAPI>=1.6.1' pyowm==3.3.0 'tzlocal==4.2' Pillow>=10.0.1
 
-# Clone and install the rpi-rgb-led-matrix library
-RUN echo "Running rgbmatrix installation..." && \
+# Clone and build the rpi-rgb-led-matrix library
+RUN cd mlb-led-scoreboard && \
     mkdir submodules && \
     cd submodules && \
     git clone https://github.com/hzeller/rpi-rgb-led-matrix.git matrix && \
@@ -45,8 +36,21 @@ RUN echo "Running rgbmatrix installation..." && \
     make build-python PYTHON=$(which python3) && \
     make install-python PYTHON=$(which python3)
 
-# Copy the entrypoint script into the container and ensure it's executable
-COPY entrypoint.sh /app/mlb-led-scoreboard/entrypoint.sh
-RUN chmod +x /app/mlb-led-scoreboard/entrypoint.sh
+# Final stage
+FROM python:3.9-slim-bookworm
 
-ENTRYPOINT ["/app/mlb-led-scoreboard/entrypoint.sh"]
+# Set the working directory in the container
+WORKDIR /app
+
+# Copy the virtual environment and the application from the builder stage
+COPY --from=builder /build/venv ./venv
+COPY --from=builder /build/mlb-led-scoreboard ./mlb-led-scoreboard
+
+# Copy and ensure the entrypoint script is executable
+COPY --from=builder /build/mlb-led-scoreboard/entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
+
+# Activate virtual environment
+ENV PATH="/app/venv/bin:$PATH"
+
+ENTRYPOINT ["/app/entrypoint.sh"]
