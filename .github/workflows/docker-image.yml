@@ -14,11 +14,11 @@ jobs:
       matrix:
         include:
           - platform: linux/arm/v6
-            tag: mlb_scoreboard:pi-zero
+            tag_suffix: pi-zero
           - platform: linux/arm/v7
-            tag: mlb_scoreboard:pi-3
+            tag_suffix: pi-3
           - platform: linux/arm64
-            tag: mlb_scoreboard:pi-4
+            tag_suffix: pi-4
     steps:
     - uses: actions/checkout@v3
 
@@ -40,5 +40,5 @@ jobs:
         context: .
         file: ./Dockerfile
         push: true
-        tags: ${{ matrix.tag }}
+        tags: stayupthetree/mlb_scoreboard:${{ matrix.tag_suffix }}
         platforms: ${{ matrix.platform }}
