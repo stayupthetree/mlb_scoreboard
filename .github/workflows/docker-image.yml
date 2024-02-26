@@ -1,0 +1,45 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    environment: scoreboardenv
+    timeout-minutes: 120 # Set the timeout to 2 hours
+    strategy:
+      matrix:
+        include:
+          - platform: linux/arm/v6
+            tag_suffix: pi-zero
+          - platform: linux/arm/v7
+            tag_suffix: pi-3
+          - platform: linux/arm/v8
+            tag_suffix: pi-4
+    steps:
+    - uses: actions/checkout@v3
+
+    # Set up Docker Buildx
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
+    # Login to DockerHub using environment secrets
+    - name: Login to DockerHub
+      uses: docker/login-action@v1
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+    # Build and push Docker image
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        file: ./Dockerfile
+        push: true
+        tags: stayupthetree/mlb_scoreboard:${{ matrix.tag_suffix }}
+        platforms: ${{ matrix.platform }}
