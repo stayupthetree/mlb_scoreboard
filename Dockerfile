@@ -1,7 +1,7 @@
 # Builder stage
 FROM python:3.9-slim-bookworm as builder
 
-# Install system and build dependencies
+# Install system and build dependencies, including Python tools and libraries
 RUN apt-get update && apt-get install -y \
     git \
     cmake \
@@ -11,6 +11,13 @@ RUN apt-get update && apt-get install -y \
     libsdl2-dev \
     libxml2-dev \
     libxslt-dev \
+    libjpeg-dev \
+    zlib1g-dev \
+    python3-pip \
+    python3-dev \
+    python3-venv \
+    python3-pillow \
+    python3-tk \
     && rm -rf /var/lib/apt/lists/*
 
 # Set the working directory for the build stage
@@ -39,15 +46,24 @@ RUN cd mlb-led-scoreboard && \
 # Final stage
 FROM python:3.9-slim-bookworm
 
+# Install runtime dependencies necessary for the application
+RUN apt-get update && apt-get install -y \
+    inotify-tools \
+    libjpeg-dev \
+    zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 # Set the working directory in the container
 WORKDIR /app
 
-# Copy the virtual environment and the application from the builder stage
+# Copy the virtual environment from the builder stage
 COPY --from=builder /build/venv ./venv
-COPY --from=builder /build/mlb-led-scoreboard ./mlb-led-scoreboard
+
+# Copy the application files directly to /app
+COPY --from=builder /build/mlb-led-scoreboard/ ./
 
 # Copy and ensure the entrypoint script is executable
-COPY --from=builder /build/mlb-led-scoreboard/entrypoint.sh ./entrypoint.sh
+COPY entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
 
 # Activate virtual environment

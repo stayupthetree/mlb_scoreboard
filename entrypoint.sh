@@ -5,8 +5,8 @@ WATCHER_ENABLED=${WATCHER_ENABLED:-false}
 
 echo "Watcher Enabled: $WATCHER_ENABLED" # Debug line to check the environment variable
 
-# Define the command to start main.py
-main_command="python3 /app/mlb-led-scoreboard/main.py"
+# Define the command to start main.py with updated path
+main_command="python3 /app/main.py"
 
 # Function to start main.py with dynamically constructed command line
 start_main_py() {
@@ -38,7 +38,8 @@ kill_main_py() {
 start_watcher() {
     # Check if watcher is enabled
     if [ "$WATCHER_ENABLED" = "true" ]; then
-        inotifywait -m -e modify -e move -e create -e delete "/app/mlb-led-scoreboard/config.json" "/app/mlb-led-scoreboard/coordinates/" "/app/mlb-led-scoreboard/colors/" |
+        # Update paths for config.json, coordinates, and colors
+        inotifywait -m -e modify -e move -e create -e delete "/app/config.json" "/app/coordinates/" "/app/colors/" |
         while read -r directory events filename; do
             # Extract just the filename from the path
             just_filename=$(basename "${directory}${filename}")
