@@ -9,6 +9,7 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    environment: scoreboardenv
     strategy:
       matrix:
         include:
@@ -25,7 +26,7 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v1
 
-    # Login to DockerHub
+    # Login to DockerHub using environment secrets
     - name: Login to DockerHub
       uses: docker/login-action@v1
       with:
