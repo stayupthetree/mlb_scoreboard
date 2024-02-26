@@ -17,7 +17,7 @@ jobs:
             tag_suffix: pi-zero
           - platform: linux/arm/v7
             tag_suffix: pi-3
-          - platform: linux/arm64
+          - platform: linux/arm/v8
             tag_suffix: pi-4
     steps:
     - uses: actions/checkout@v3
