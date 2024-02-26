@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  scoreboard:
+    image: mlb_led_scoreboard:install
+    container_name: scoreboard
+    privileged: true
+    devices:
+      - /dev/gpiomem:/dev/gpiomem
+    volumes:
+      - ./config.json:/app/mlb-led-scoreboard/config.json
+      - ./coordinates:/app/mlb-led-scoreboard/coordinates/
+      - ./colors:/app/mlb-led-scoreboard/colors/
+    environment:
+      - PARAM_LED_GPIO_MAPPING=adafruit-hat-pwm
+      - PARAM_LED_BRIGHTNESS=60
+      - PARAM_LED_SLOWDOWN_GPIO=3
+      - PARAM_LED_COLS=64
+      - PARAM_LED_ROWS=32
+      - TZ=America/New_York
