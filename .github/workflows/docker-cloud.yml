@@ -31,7 +31,7 @@ jobs:
           file: ./Dockerfile
           tags: stayupthetree/mlb-scoreboard:latest
           push: true
-          platforms: linux/arm/v6,linux/arm/v7,linux/arm64
+          platforms: linux/arm/v6,linux/arm/v7,linux/arm/v8,linux/arm64
           # For pull requests, export results to the build cache.
           # Otherwise, push to a registry.
           outputs: ${{ github.event_name == 'pull_request' && 'type=cacheonly' || 'type=registry,push=true' }}
