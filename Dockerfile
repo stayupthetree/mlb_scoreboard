@@ -1,10 +1,8 @@
 # Use the official Debian slim image as the base image
-FROM python:3.9-bookworm
-
+FROM python:3.9-slim-bookworm
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     git \
-    sudo \
     python3 \
     inotify-tools \
     python3-pip \
@@ -36,7 +34,7 @@ ENV PATH="/app/mlb-led-scoreboard/venv/bin:$PATH"
 
 # Install the specified Python packages
 RUN pip3 install wheel
-RUN pip3 install --no-cache-dir feedparser==6.0.10 'MLB_StatsAPI>=1.6.1' pyowm==3.3.0 'RGBMatrixEmulator>=0.8.4' tzlocal==4.2
+RUN pip3 install --no-cache-dir feedparser==6.0.10 'MLB_StatsAPI>=1.6.1' pyowm==3.3.0 'tzlocal==4.2' Pillow>=10.0.1
 
 # Clone and install the rpi-rgb-led-matrix library
 RUN echo "Running rgbmatrix installation..." && \
@@ -45,18 +43,10 @@ RUN echo "Running rgbmatrix installation..." && \
     git clone https://github.com/hzeller/rpi-rgb-led-matrix.git matrix && \
     cd matrix && \
     make build-python PYTHON=$(which python3) && \
-    sudo make install-python PYTHON=$(which python3)
+    make install-python PYTHON=$(which python3)
 
 # Copy the entrypoint script into the container and ensure it's executable
 COPY entrypoint.sh /app/mlb-led-scoreboard/entrypoint.sh
 RUN chmod +x /app/mlb-led-scoreboard/entrypoint.sh
-
-## Create a non-root user and switch to it
-RUN useradd -m dockeruser && echo "dockeruser ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/dockeruser
-
-# It's important to switch to the non-root user after all commands that require root access have been executed
-#COPY watcher.sh /watcher.sh
-#RUN chmod +x /watcher.sh
-
 
 ENTRYPOINT ["/app/mlb-led-scoreboard/entrypoint.sh"]
