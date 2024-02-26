@@ -10,6 +10,7 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     environment: scoreboardenv
+    timeout-minutes: 120 # Set the timeout to 2 hours
     strategy:
       matrix:
         include:
