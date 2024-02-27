@@ -8,13 +8,13 @@ echo "Watcher Enabled: $WATCHER_ENABLED" # Debug line to check the environment v
 # Function to move specific files to their respective directories
 move_specific_files() {
     # Move scoreboard.json to /app/colors/
-    if [ -f "/app/scoreboard.json" ]; then
+    if [ -f "/app/configs/scoreboard.json" ]; then
         echo "Moving scoreboard.json to /app/colors/"
-        mv -f "/app/scoreboard.json" "/app/colors/"
+        mv -f "/app/configs/scoreboard.json" "/app/colors/"
     fi
 
     # Move certain JSON files to /app/coordinates/
-    for file in /app/*.json; do
+    for file in /app/configs/*.json; do
         filename=$(basename "$file")
         if [[ $filename =~ w(32|64|128)h(32|64).json(.example|.sample)? ]]; then
             echo "Moving $filename to /app/coordinates/"
@@ -22,6 +22,9 @@ move_specific_files() {
         fi
     done
 }
+
+# Move specific files before starting main.py or watcher
+move_specific_files
 
 # Define the command to start main.py with updated path
 main_command="python3 /app/main.py"
@@ -36,13 +39,7 @@ start_main_py() {
         fi
     done < <(env)
 
-    # Move specific files before starting main.py
-    move_specific_files
-
-    # Echo the full command for debugging
     echo "Running command: $main_command $additional_params"
-
-    # Redirect output of main.py to stdout/stderr of PID 1 and execute it
     $main_command $additional_params > /proc/1/fd/1 2>/proc/1/fd/2 &
     MAIN_PY_PID=$!
 }
@@ -57,15 +54,10 @@ kill_main_py() {
 
 # Function to start the watcher
 start_watcher() {
-    # Check if watcher is enabled
     if [ "$WATCHER_ENABLED" = "true" ]; then
-        # Update paths for config.json, coordinates, and colors
-        inotifywait -m -e modify -e move -e create -e delete "/app" |
+        inotifywait -m -e modify -e move -e create -e delete "/app" "/app/colors/" "/app/coordinates/" |
         while read -r directory events filename; do
-            # Check and move specific files if necessary
             move_specific_files
-
-            # Extract just the filename from the path
             just_filename=$(basename "${directory}${filename}")
             echo "Change detected $just_filename. The application will restart."
             kill_main_py
@@ -83,7 +75,7 @@ kill_main_py
 # Start main.py
 start_main_py
 
-# Start the watcher
+# Start the watcher in the background if enabled
 if [ "$WATCHER_ENABLED" = "true" ]; then
     start_watcher &
 fi
