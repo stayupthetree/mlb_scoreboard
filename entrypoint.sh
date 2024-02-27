@@ -103,21 +103,22 @@ kill_main_py() {
 
 start_watcher() {
     if [ "$WATCHER_ENABLED" = "true" ]; then
-        inotifywait -m -e modify -e move -e create -e delete "/app/configs" "/app/colors" "/app/coordinates" |
+        inotifywait -m -e modify "/app/configs/config.json" "/app/configs/scoreboard.json" |
         while read -r directory events filename; do
-            # Debounce mechanism: Resets the timer for each event
-            if [[ -n $timer_pid ]]; then
-                kill $timer_pid 2>/dev/null
+            # Ensure we only react to changes in specific config files
+            if [[ "$filename" == "config.json" || "$filename" == "scoreboard.json" ]]; then
+                echo "Detected changes to $filename. Restarting application."
+                copy_specific_files
+                kill_main_py
+                sleep 1
+                start_main_py
             fi
-
-            # Background process to wait for a quiet period
-            ( sleep 5 && copy_specific_files && echo "Detected changes. Restarting application." && kill_main_py && start_main_py ) &
-            timer_pid=$!
         done
     else
         echo "Watcher is disabled."
     fi
 }
+
 
 kill_main_py
 start_main_py
