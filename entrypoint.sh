@@ -34,6 +34,9 @@ copy_initial_configs() {
 
         touch "$flag_file"
         chown $PUID:$PGID "$flag_file"
+
+        # Set ownership of the entire /app/configs directory to PUID:PGID
+        chown -R $PUID:$PGID "/app/configs"
     fi
 }
 
