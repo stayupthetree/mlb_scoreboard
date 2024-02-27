@@ -3,9 +3,6 @@
 # Default WATCHER_ENABLED to false if not set
 WATCHER_ENABLED=${WATCHER_ENABLED:-false}
 
-# Add a global variable to track the last update time by the script
-LAST_UPDATE_TIME=0
-
 # Retrieve UID and GID from environment variables, defaulting to 1000 if not provided
 PUID=${PUID:-1000}
 PGID=${PGID:-1000}
@@ -37,15 +34,10 @@ copy_initial_configs() {
 
         touch "$flag_file"
         chown $PUID:$PGID "$flag_file"
-
-        # Set ownership of the entire /app/configs directory to PUID:PGID
-        chown -R $PUID:$PGID "/app/configs"
     fi
 }
 
 copy_specific_files() {
-    # Update LAST_UPDATE_TIME with the current timestamp before file operations
-    LAST_UPDATE_TIME=$(date +%s)
     if [ -f "/app/configs/config.json" ]; then
         if [ -f "/app/config.json" ]; then
             mv -f "/app/config.json" "/app/config.json.bak"
@@ -103,22 +95,18 @@ kill_main_py() {
 
 start_watcher() {
     if [ "$WATCHER_ENABLED" = "true" ]; then
-        inotifywait -m -e modify "/app/configs/config.json" "/app/configs/scoreboard.json" |
+        inotifywait -m -e modify -e move -e create -e delete "/app/configs" "/app/colors" "/app/coordinates" |
         while read -r directory events filename; do
-            # Ensure we only react to changes in specific config files
-            if [[ "$filename" == "config.json" || "$filename" == "scoreboard.json" ]]; then
-                echo "Detected changes to $filename. Restarting application."
-                copy_specific_files
-                kill_main_py
-                sleep 1
-                start_main_py
-            fi
+            copy_specific_files
+            echo "Detected changes. Restarting application."
+            kill_main_py
+            sleep 1
+            start_main_py
         done
     else
         echo "Watcher is disabled."
     fi
 }
-
 
 kill_main_py
 start_main_py
