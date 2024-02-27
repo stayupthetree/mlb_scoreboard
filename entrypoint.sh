@@ -5,26 +5,44 @@ WATCHER_ENABLED=${WATCHER_ENABLED:-false}
 
 echo "Watcher Enabled: $WATCHER_ENABLED" # Debug line to check the environment variable
 
-# Function to move specific files to their respective directories
-move_specific_files() {
-    # Move scoreboard.json to /app/colors/
+# Function to copy specific files to their respective directories with backup
+copy_specific_files() {
+    # Copy and backup scoreboard.json to /app/colors/
     if [ -f "/app/configs/scoreboard.json" ]; then
-        echo "Moving scoreboard.json to /app/colors/"
-        mv -f "/app/configs/scoreboard.json" "/app/colors/"
+        if [ -f "/app/colors/scoreboard.json" ]; then
+            echo "Backing up scoreboard.json to scoreboard.json.bak"
+            mv -f "/app/colors/scoreboard.json" "/app/colors/scoreboard.json.bak"
+        fi
+        echo "Copying scoreboard.json to /app/colors/"
+        cp -f "/app/configs/scoreboard.json" "/app/colors/"
     fi
 
-    # Move certain JSON files to /app/coordinates/
+    # Copy and backup config.json to /app/
+    if [ -f "/app/configs/config.json" ]; then
+        if [ -f "/app/config.json" ]; then
+            echo "Backing up config.json to config.json.bak"
+            mv -f "/app/config.json" "/app/config.json.bak"
+        fi
+        echo "Copying config.json to /app/"
+        cp -f "/app/configs/config.json" "/app/"
+    fi
+
+    # Copy and backup certain JSON files to /app/coordinates/
     for file in /app/configs/*.json; do
         filename=$(basename "$file")
         if [[ $filename =~ w(32|64|128)h(32|64).json(.example|.sample)? ]]; then
-            echo "Moving $filename to /app/coordinates/"
-            mv -f "$file" "/app/coordinates/"
+            if [ -f "/app/coordinates/$filename" ]; then
+                echo "Backing up $filename to $filename.bak"
+                mv -f "/app/coordinates/$filename" "/app/coordinates/$filename.bak"
+            fi
+            echo "Copying $filename to /app/coordinates/"
+            cp -f "$file" "/app/coordinates/"
         fi
     done
 }
 
-# Move specific files before starting main.py or watcher
-move_specific_files
+# Copy specific files before starting main.py or watcher
+copy_specific_files
 
 # Define the command to start main.py with updated path
 main_command="python3 /app/main.py"
@@ -55,9 +73,9 @@ kill_main_py() {
 # Function to start the watcher
 start_watcher() {
     if [ "$WATCHER_ENABLED" = "true" ]; then
-        inotifywait -m -e modify -e move -e create -e delete "/app" "/app/colors/" "/app/coordinates/" |
+        inotifywait -m -e modify -e move -e create -e delete "/app/configs" "/app/colors" "/app/coordinates" |
         while read -r directory events filename; do
-            move_specific_files
+            copy_specific_files
             just_filename=$(basename "${directory}${filename}")
             echo "Change detected $just_filename. The application will restart."
             kill_main_py
