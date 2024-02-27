@@ -103,27 +103,16 @@ kill_main_py() {
 
 start_watcher() {
     if [ "$WATCHER_ENABLED" = "true" ]; then
-        while true; do
-            # Wait for significant changes (ignoring temporary files)
-            CHANGE_DETECTED=0
-            inotifywait -q -e modify -e move -e create -e delete --exclude '.*(~|\.swp)$' "/app/configs" "/app/colors" "/app/coordinates" |
-            while read -r directory events filename; do
-                # Check if the file is not a temporary or backup file
-                if [[ ! $filename =~ .*~$ ]] && [[ ! $filename =~ ^\..* ]]; then
-                    CHANGE_DETECTED=1
-                    break
-                fi
-            done
-
-            if [[ $CHANGE_DETECTED -eq 1 ]]; then
-                echo "Detected changes. Restarting application after debounce period."
-                # Wait for a debounce period to ensure all related changes are accounted for
-                sleep 2
-                
-                copy_specific_files
-                kill_main_py
-                start_main_py
+        inotifywait -m -e modify -e move -e create -e delete "/app/configs" "/app/colors" "/app/coordinates" |
+        while read -r directory events filename; do
+            # Debounce mechanism: Resets the timer for each event
+            if [[ -n $timer_pid ]]; then
+                kill $timer_pid 2>/dev/null
             fi
+
+            # Background process to wait for a quiet period
+            ( sleep 5 && copy_specific_files && echo "Detected changes. Restarting application." && kill_main_py && start_main_py ) &
+            timer_pid=$!
         done
     else
         echo "Watcher is disabled."
