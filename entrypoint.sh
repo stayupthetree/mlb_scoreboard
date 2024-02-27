@@ -95,30 +95,33 @@ kill_main_py() {
 
 start_watcher() {
     if [ "$WATCHER_ENABLED" = "true" ]; then
-        local debounce_timer=2
-        local last_event_time=0
-        local current_time
-        inotifywait -m -e modify "/app/configs" "/app/colors" "/app/coordinates" |
-        while read -r directory events filename; do
-            current_time=$(date +%s)
-            if (( last_event_time + debounce_timer > current_time )); then
-                continue # Skip this event, it's within the debounce period
+        while true; do
+            # Wait for significant changes (ignoring temporary files)
+            CHANGE_DETECTED=0
+            inotifywait -q -e modify -e move -e create -e delete --exclude '.*(~|\.swp)$' "/app/configs" "/app/colors" "/app/coordinates" |
+            while read -r directory events filename; do
+                # Check if the file is not a temporary or backup file
+                if [[ ! $filename =~ .*~$ ]] && [[ ! $filename =~ ^\..* ]]; then
+                    CHANGE_DETECTED=1
+                    break
+                fi
+            done
+
+            if [[ $CHANGE_DETECTED -eq 1 ]]; then
+                echo "Detected changes. Restarting application after debounce period."
+                # Wait for a debounce period to ensure all related changes are accounted for
+                sleep 2
+                
+                copy_specific_files
+                kill_main_py
+                start_main_py
             fi
-            last_event_time=$current_time
-            # Only proceed if the file content has changed significantly (pseudo code)
-            # if ! contents_changed "$directory$filename"; then
-            #     continue
-            # fi
-            copy_specific_files
-            echo "Detected meaningful changes. Restarting application."
-            kill_main_py
-            sleep 1 # Short delay to ensure process termination
-            start_main_py
         done
     else
         echo "Watcher is disabled."
     fi
 }
+
 
 
 kill_main_py
