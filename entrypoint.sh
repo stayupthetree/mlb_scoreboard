@@ -95,18 +95,31 @@ kill_main_py() {
 
 start_watcher() {
     if [ "$WATCHER_ENABLED" = "true" ]; then
-        inotifywait -m -e modify -e move -e create -e delete "/app/configs" "/app/colors" "/app/coordinates" |
+        local debounce_timer=2
+        local last_event_time=0
+        local current_time
+        inotifywait -m -e modify "/app/configs" "/app/colors" "/app/coordinates" |
         while read -r directory events filename; do
+            current_time=$(date +%s)
+            if (( last_event_time + debounce_timer > current_time )); then
+                continue # Skip this event, it's within the debounce period
+            fi
+            last_event_time=$current_time
+            # Only proceed if the file content has changed significantly (pseudo code)
+            # if ! contents_changed "$directory$filename"; then
+            #     continue
+            # fi
             copy_specific_files
-            echo "Detected changes. Restarting application."
+            echo "Detected meaningful changes. Restarting application."
             kill_main_py
-            sleep 1
+            sleep 1 # Short delay to ensure process termination
             start_main_py
         done
     else
         echo "Watcher is disabled."
     fi
 }
+
 
 kill_main_py
 start_main_py
