@@ -5,6 +5,24 @@ WATCHER_ENABLED=${WATCHER_ENABLED:-false}
 
 echo "Watcher Enabled: $WATCHER_ENABLED" # Debug line to check the environment variable
 
+# Function to move specific files to their respective directories
+move_specific_files() {
+    # Move scoreboard.json to /app/colors/
+    if [ -f "/app/scoreboard.json" ]; then
+        echo "Moving scoreboard.json to /app/colors/"
+        mv -f "/app/scoreboard.json" "/app/colors/"
+    fi
+
+    # Move certain JSON files to /app/coordinates/
+    for file in /app/*.json; do
+        filename=$(basename "$file")
+        if [[ $filename =~ w(32|64|128)h(32|64).json(.example|.sample)? ]]; then
+            echo "Moving $filename to /app/coordinates/"
+            mv -f "$file" "/app/coordinates/"
+        fi
+    done
+}
+
 # Define the command to start main.py with updated path
 main_command="python3 /app/main.py"
 
@@ -17,6 +35,9 @@ start_main_py() {
             additional_params+="--$param_name=$value "
         fi
     done < <(env)
+
+    # Move specific files before starting main.py
+    move_specific_files
 
     # Echo the full command for debugging
     echo "Running command: $main_command $additional_params"
@@ -39,11 +60,14 @@ start_watcher() {
     # Check if watcher is enabled
     if [ "$WATCHER_ENABLED" = "true" ]; then
         # Update paths for config.json, coordinates, and colors
-        inotifywait -m -e modify -e move -e create -e delete "/app/config.json" "/app/coordinates/" "/app/colors/" |
+        inotifywait -m -e modify -e move -e create -e delete "/app" |
         while read -r directory events filename; do
+            # Check and move specific files if necessary
+            move_specific_files
+
             # Extract just the filename from the path
             just_filename=$(basename "${directory}${filename}")
-            echo "Config change detected $just_filename. The MLB Scoreboard will restart."
+            echo "Change detected $just_filename. The application will restart."
             kill_main_py
             sleep 1
             start_main_py
