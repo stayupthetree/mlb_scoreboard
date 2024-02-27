@@ -8,6 +8,7 @@ on:
 jobs:
   docker:
     runs-on: ubuntu-latest
+    environment: scoreboardenv
     steps:
       - name: Checkout
         uses: actions/checkout@v4
