@@ -74,19 +74,6 @@ copy_specific_files
 
 main_command="python3 /app/main.py"
 
-kill_main_py() {
-    if [ ! -z "$MAIN_PY_PID" ]; then
-        if kill -0 $MAIN_PY_PID > /dev/null 2>&1; then
-            echo "Killing main.py with PID: $MAIN_PY_PID"
-            kill "$MAIN_PY_PID" && wait "$MAIN_PY_PID"
-        else
-            echo "No process found with PID: $MAIN_PY_PID"
-        fi
-    else
-        echo "MAIN_PY_PID is unset or empty."
-    fi
-}
-
 start_main_py() {
     echo "Starting main.py..."
     additional_params=""
@@ -101,6 +88,22 @@ start_main_py() {
     MAIN_PY_PID=$!
     echo "Started main.py with PID: $MAIN_PY_PID"
 }
+
+kill_main_py() {
+    if [ ! -z "$MAIN_PY_PID" ]; then
+        echo "Attempting to kill main.py with PID: $MAIN_PY_PID"
+        if kill -0 $MAIN_PY_PID > /dev/null 2>&1; then
+            echo "Killing main.py with PID: $MAIN_PY_PID"
+            kill "$MAIN_PY_PID" && wait "$MAIN_PY_PID"
+            echo "main.py with PID: $MAIN_PY_PID has been killed."
+        else
+            echo "No process found with PID: $MAIN_PY_PID"
+        fi
+    else
+        echo "MAIN_PY_PID is unset or empty at kill attempt."
+    fi
+}
+
 
 
 start_watcher() {
