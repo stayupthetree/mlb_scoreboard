@@ -100,8 +100,10 @@ start_watcher() {
             CHANGE_DETECTED=0
             inotifywait -q -e modify -e move -e create -e delete --exclude '.*(~|\.swp)$' "/app/configs" "/app/colors" "/app/coordinates" |
             while read -r directory events filename; do
+                echo "Detected event: $directory, $events, $filename" # Debugging output
                 # Check if the file is not a temporary or backup file
                 if [[ ! $filename =~ .*~$ ]] && [[ ! $filename =~ ^\..* ]]; then
+                    echo "Change detected for file: $filename" # More debugging output
                     CHANGE_DETECTED=1
                     break
                 fi
@@ -121,6 +123,7 @@ start_watcher() {
         echo "Watcher is disabled."
     fi
 }
+
 
 
 
