@@ -1,4 +1,4 @@
-name: test-armv8
+name: new-armv8
 
 on:
   push:
