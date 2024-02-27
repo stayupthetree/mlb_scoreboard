@@ -1,4 +1,4 @@
-name: scoreboard-armv8
+name: scoreboard-armv7
 
 on:
   push:
