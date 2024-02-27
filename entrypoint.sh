@@ -3,6 +3,9 @@
 # Default WATCHER_ENABLED to false if not set
 WATCHER_ENABLED=${WATCHER_ENABLED:-false}
 
+# Add a global variable to track the last update time by the script
+LAST_UPDATE_TIME=0
+
 # Retrieve UID and GID from environment variables, defaulting to 1000 if not provided
 PUID=${PUID:-1000}
 PGID=${PGID:-1000}
@@ -41,6 +44,8 @@ copy_initial_configs() {
 }
 
 copy_specific_files() {
+    # Update LAST_UPDATE_TIME with the current timestamp before file operations
+    LAST_UPDATE_TIME=$(date +%s)
     if [ -f "/app/configs/config.json" ]; then
         if [ -f "/app/config.json" ]; then
             mv -f "/app/config.json" "/app/config.json.bak"
@@ -98,13 +103,21 @@ kill_main_py() {
 
 start_watcher() {
     if [ "$WATCHER_ENABLED" = "true" ]; then
-        inotifywait -m -e modify -e move -e create -e delete "/app/configs" "/app/colors" "/app/coordinates" |
-        while read -r directory events filename; do
-            copy_specific_files
-            echo "Detected changes. Restarting application."
-            kill_main_py
-            sleep 1
-            start_main_py
+        inotifywait -m -e modify -e move -e create -e delete --format '%w %e %f %T' --timefmt '%s' "/app/configs" "/app/colors" "/app/coordinates" |
+        while read -r directory events filename event_time; do
+            # Calculate time since last script update
+            TIME_SINCE_LAST_UPDATE=$((event_time - LAST_UPDATE_TIME))
+            
+            # Proceed only if the event is beyond a certain threshold from the last update
+            # For example, 2 seconds to ensure it's not triggered by script's own updates
+            if [[ $TIME_SINCE_LAST_UPDATE -gt 2 ]]; then
+                echo "Detected changes. Restarting application."
+                copy_specific_files
+                kill_main_py
+                # Introduce a slight delay to ensure all file operations are completed
+                sleep 1
+                start_main_py
+            fi
         done
     else
         echo "Watcher is disabled."
