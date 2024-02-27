@@ -5,18 +5,36 @@ WATCHER_ENABLED=${WATCHER_ENABLED:-false}
 
 echo "Watcher Enabled: $WATCHER_ENABLED" # Debug line to check the environment variable
 
+# Function to copy initial example files to /app/configs if not already done
+copy_initial_configs() {
+    # Create a flag file to indicate the initial copy has been completed
+    local flag_file="/app/configs/.initial_copy_done"
+
+    if [ ! -f "$flag_file" ]; then
+        # Copy the example config file if it exists
+        if [ -f "/app/config.json.example" ]; then
+            cp -n "/app/config.json.example" "/app/configs/config.json"
+        fi
+
+        # Copy the scoreboard example file if it exists
+        if [ -f "/app/colors/scoreboard.json" ]; then
+            cp -n "/app/colors/scoreboard.json" "/app/configs/scoreboard.json"
+        fi
+
+        # Copy any .json or .json.example files from /app/coordinates
+        for file in /app/coordinates/*.json /app/coordinates/*.json.example; do
+            if [ -f "$file" ]; then
+                cp -n "$file" "/app/configs/"
+            fi
+        done
+
+        # Create the flag file to prevent future copying
+        touch "$flag_file"
+    fi
+}
+
 # Function to copy specific files to their respective directories with backup
 copy_specific_files() {
-    # Copy and backup scoreboard.json to /app/colors/
-    if [ -f "/app/configs/scoreboard.json" ]; then
-        if [ -f "/app/colors/scoreboard.json" ]; then
-            echo "Backing up scoreboard.json to scoreboard.json.bak"
-            mv -f "/app/colors/scoreboard.json" "/app/colors/scoreboard.json.bak"
-        fi
-        echo "Copying scoreboard.json to /app/colors/"
-        cp -f "/app/configs/scoreboard.json" "/app/colors/"
-    fi
-
     # Copy and backup config.json to /app/
     if [ -f "/app/configs/config.json" ]; then
         if [ -f "/app/config.json" ]; then
@@ -25,6 +43,16 @@ copy_specific_files() {
         fi
         echo "Copying config.json to /app/"
         cp -f "/app/configs/config.json" "/app/"
+    fi
+
+    # Copy and backup scoreboard.json to /app/colors/
+    if [ -f "/app/configs/scoreboard.json" ]; then
+        if [ -f "/app/colors/scoreboard.json" ]; then
+            echo "Backing up scoreboard.json to scoreboard.json.bak"
+            mv -f "/app/colors/scoreboard.json" "/app/colors/scoreboard.json.bak"
+        fi
+        echo "Copying scoreboard.json to /app/colors/"
+        cp -f "/app/configs/scoreboard.json" "/app/colors/"
     fi
 
     # Copy and backup certain JSON files to /app/coordinates/
@@ -40,6 +68,9 @@ copy_specific_files() {
         fi
     done
 }
+
+# Run initial copying of example configs if it's the first run
+copy_initial_configs
 
 # Copy specific files before starting main.py or watcher
 copy_specific_files
