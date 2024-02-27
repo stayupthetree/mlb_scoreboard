@@ -103,19 +103,25 @@ kill_main_py() {
 
 start_watcher() {
     if [ "$WATCHER_ENABLED" = "true" ]; then
-        inotifywait -m -e modify -e move -e create -e delete --format '%w %e %f %T' --timefmt '%s' "/app/configs" "/app/colors" "/app/coordinates" |
-        while read -r directory events filename event_time; do
-            # Calculate time since last script update
-            TIME_SINCE_LAST_UPDATE=$((event_time - LAST_UPDATE_TIME))
-            
-            # Proceed only if the event is beyond a certain threshold from the last update
-            # For example, 2 seconds to ensure it's not triggered by script's own updates
-            if [[ $TIME_SINCE_LAST_UPDATE -gt 2 ]]; then
-                echo "Detected changes. Restarting application."
+        while true; do
+            # Wait for significant changes (ignoring temporary files)
+            CHANGE_DETECTED=0
+            inotifywait -q -e modify -e move -e create -e delete --exclude '.*(~|\.swp)$' "/app/configs" "/app/colors" "/app/coordinates" |
+            while read -r directory events filename; do
+                # Check if the file is not a temporary or backup file
+                if [[ ! $filename =~ .*~$ ]] && [[ ! $filename =~ ^\..* ]]; then
+                    CHANGE_DETECTED=1
+                    break
+                fi
+            done
+
+            if [[ $CHANGE_DETECTED -eq 1 ]]; then
+                echo "Detected changes. Restarting application after debounce period."
+                # Wait for a debounce period to ensure all related changes are accounted for
+                sleep 5
+                
                 copy_specific_files
                 kill_main_py
-                # Introduce a slight delay to ensure all file operations are completed
-                sleep 1
                 start_main_py
             fi
         done
