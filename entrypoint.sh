@@ -118,7 +118,7 @@ start_watcher() {
             if [[ $CHANGE_DETECTED -eq 1 ]]; then
                 echo "Detected changes. Restarting application after debounce period."
                 # Wait for a debounce period to ensure all related changes are accounted for
-                sleep 5
+                sleep 2
                 
                 copy_specific_files
                 kill_main_py
