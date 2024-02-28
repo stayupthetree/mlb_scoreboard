@@ -66,7 +66,8 @@ copy_specific_files() {
             cp -f "$file" "/app/coordinates/"
             chown $PUID:$PGID "/app/coordinates/$filename"
         fi
-    done}
+    done
+}
 
 copy_initial_configs
 copy_specific_files
