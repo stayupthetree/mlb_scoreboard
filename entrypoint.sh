@@ -101,4 +101,29 @@ kill_main_py() {
         fi
     else
         echo "MAIN_PY_PID is unset or empty at kill attempt."
-   
+    fi
+}
+
+start_watcher() {
+    echo "Starting configuration watcher..."
+    inotifywait -m -e close_write,moved_to,create /app/configs |
+    while read -r directory events filename; do
+        if [[ "$filename" == "config.json" ]] || [[ "$filename" =~ w(32|64|128)h(32|64).json(.example|.sample)? ]] || [[ "$filename" == "scoreboard.json" ]]; then
+            echo "Configuration change detected: $filename"
+            kill_main_py
+            copy_specific_files
+            start_main_py
+        fi
+    done
+}
+
+# Start main.py initially
+start_main_py
+
+# If watcher is enabled, start it in the background
+if [ "$WATCHER_ENABLED" == "true" ]; then
+    start_watcher &
+fi
+
+# Wait for main.py process to prevent the container from exiting
+wait $MAIN_PY_PID
