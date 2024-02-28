@@ -40,8 +40,8 @@ RUN cd mlb-led-scoreboard && \
     cd submodules && \
     git clone https://github.com/hzeller/rpi-rgb-led-matrix.git matrix && \
     cd matrix && \
-    make build-python PYTHON=$(which python3) -j$(nproc) && \
-    make install-python PYTHON=$(which python3) -j$(nproc)
+    make build-python PYTHON=$(which python3) -j4 && \
+    make install-python PYTHON=$(which python3) -j4
 
 # Final stage
 FROM python:3.9-slim-bookworm
