@@ -44,7 +44,7 @@ RUN cd mlb-led-scoreboard && \
     make install-python PYTHON=$(which python3) -j4
 
 # Final stage
-FROM python:3.9-slim-bookworm
+FROM python:3.9-bookworm
 
 # Install runtime dependencies necessary for the application
 RUN apt-get update && apt-get install -y \
