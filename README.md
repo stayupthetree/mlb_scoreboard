@@ -20,7 +20,7 @@ version: '3.8'
 
 services:
   scoreboard:
-    image: stayupthetree/mlb_scoreboard:armv8 #change to armv7 for older pi
+    image: ghcr.io/stayupthetree/mlb_scoreboard:armv7 #change to armv7 for older pi
     container_name: scoreboard
     privileged: true
     devices:
