@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Default WATCHER_ENABLED to false if not set.
+# Default WATCHER_ENABLED to false if not set
 WATCHER_ENABLED=${WATCHER_ENABLED:-false}
 
 # Retrieve UID and GID from environment variables, defaulting to 1000 if not provided
