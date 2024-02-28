@@ -36,7 +36,7 @@ copy_initial_configs() {
                 chown $PUID:$PGID "/app/configs/$(basename "$file")"
             fi
         done
-
+        echo "Copied starter configs to config folder"
         touch "$flag_file"
         chown $PUID:$PGID "/app/configs/"
         chown $PUID:$PGID "$flag_file"
@@ -92,7 +92,7 @@ main_command="python3 /app/main.py"
 
 # Function to start main.py
 start_main_py() {
-    echo "Starting main.py..."
+#    echo "Starting MLB Scoreboard..."
     additional_params=""
     while IFS='=' read -r name value ; do
         if [[ $name == PARAM_* ]]; then
@@ -104,7 +104,7 @@ start_main_py() {
     # Start main.py with additional parameters and capture its PID
     $main_command $additional_params > /proc/1/fd/1 2>/proc/1/fd/2 &
     MAIN_PY_PID=$!
-    echo "Started main.py with PID: $MAIN_PY_PID"
+    echo "Started MLB Scoreboard with PID: $MAIN_PY_PID"
 }
 
 kill_main_py() {
@@ -115,7 +115,7 @@ kill_main_py() {
 
 # Function to handle the restart logic
 restart_main_py() {
-    echo "Restarting main.py..."
+    echo "Restarting MLB Scoreboard..."
     kill_main_py
     sleep 2 # Ensure the process has been fully terminated before restart
     start_main_py
