@@ -25,6 +25,11 @@ copy_initial_configs() {
             chown $PUID:$PGID "/app/configs/scoreboard.json"
         fi
 
+        if [ -f "/app/colors/teams.json.example" ]; then
+            cp -n "/app/colors/teams.json.example" "/app/configs/teams.json"
+            chown $PUID:$PGID "/app/configs/teams.json"
+        fi
+
         for file in /app/coordinates/*.json /app/coordinates/*.json.example; do
             if [ -f "$file" ]; then
                 cp -n "$file" "/app/configs/"
@@ -54,6 +59,15 @@ copy_specific_files() {
         fi
         cp -f "/app/configs/scoreboard.json" "/app/colors/"
         chown $PUID:$PGID "/app/colors/scoreboard.json"
+    fi
+
+    if [ -f "/app/configs/teams.json" ]; then
+        if [ -f "/app/colors/teams.json" ]; then
+            mv -f "/app/colors/teams.json" "/app/colors/teams.json.bak"
+            chown $PUID:$PGID "/app/colors/teams.json.bak"
+        fi
+        cp -f "/app/configs/teams.json" "/app/colors/"
+        chown $PUID:$PGID "/app/colors/teams.json"
     fi
 
     for file in /app/configs/*.json; do
@@ -102,11 +116,9 @@ kill_main_py() {
 restart_main_py() {
     echo "Restarting main.py..."
     kill_main_py
-    # Add a short delay to ensure the process has been fully terminated
-    sleep 2
+    sleep 2 # Ensure the process has been fully terminated before restart
     start_main_py
 }
-
 
 # Start main.py initially
 start_main_py
@@ -117,11 +129,9 @@ start_watcher() {
         echo "Starting configuration watcher..."
         inotifywait -m -e close_write,moved_to,create /app/configs |
         while read -r directory events filename; do
-            if [[ "$filename" == "config.json" ]] || [[ "$filename" =~ w(32|64|128)h(32|64).json(.example|.sample)? ]] || [[ "$filename" == "scoreboard.json" ]]; then
+            if [[ "$filename" == "config.json" ]] || [[ "$filename" == "scoreboard.json" ]] || [[ "$filename" == "teams.json" ]] || [[ $filename =~ w(32|64|128)h(32|64).json(.example|.sample)? ]]; then
                 echo "Configuration change detected: $filename"
-                kill_main_py
-                sleep 1
-                start_main_py
+                restart_main_py
             fi
         done
     else
