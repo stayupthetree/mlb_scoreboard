@@ -66,14 +66,15 @@ copy_specific_files() {
             cp -f "$file" "/app/coordinates/"
             chown $PUID:$PGID "/app/coordinates/$filename"
         fi
-    done
-}
+    done}
 
 copy_initial_configs
 copy_specific_files
 
+# Define the main command with the path to main.py
 main_command="python3 /app/main.py"
 
+# Function to start main.py
 start_main_py() {
     echo "Starting main.py..."
     additional_params=""
@@ -84,11 +85,13 @@ start_main_py() {
         fi
     done < <(env)
 
+    # Start main.py with additional parameters and capture its PID
     $main_command $additional_params > /proc/1/fd/1 2>/proc/1/fd/2 &
     MAIN_PY_PID=$!
     echo "Started main.py with PID: $MAIN_PY_PID"
 }
 
+# Function to kill main.py using the stored PID
 kill_main_py() {
     if [ ! -z "$MAIN_PY_PID" ]; then
         echo "Attempting to kill main.py with PID: $MAIN_PY_PID"
@@ -104,26 +107,38 @@ kill_main_py() {
     fi
 }
 
-start_watcher() {
-    echo "Starting configuration watcher..."
-    inotifywait -m -e close_write,moved_to,create /app/configs |
-    while read -r directory events filename; do
-        if [[ "$filename" == "config.json" ]] || [[ "$filename" =~ w(32|64|128)h(32|64).json(.example|.sample)? ]] || [[ "$filename" == "scoreboard.json" ]]; then
-            echo "Configuration change detected: $filename"
-            kill_main_py
-            copy_specific_files
-            start_main_py
-        fi
-    done
+# Function to handle the restart logic
+restart_main_py() {
+    echo "Restarting main.py..."
+    kill_main_py
+    # Add a short delay to ensure the process has been fully terminated
+    sleep 2
+    start_main_py
 }
 
 # Start main.py initially
 start_main_py
 
+# Function to start the watcher
+start_watcher() {
+    if [ "$WATCHER_ENABLED" = "true" ]; then
+        echo "Starting configuration watcher..."
+        inotifywait -m -e close_write,moved_to,create /app/configs |
+        while read -r directory events filename; do
+            if [[ "$filename" == "config.json" ]] || [[ "$filename" =~ w(32|64|128)h(32|64).json(.example|.sample)? ]] || [[ "$filename" == "scoreboard.json" ]]; then
+                echo "Configuration change detected: $filename"
+                restart_main_py
+            fi
+        done
+    else
+        echo "Watcher is disabled."
+    fi
+}
+
 # If watcher is enabled, start it in the background
-if [ "$WATCHER_ENABLED" == "true" ]; then
+if [ "$WATCHER_ENABLED" = "true" ]; then
     start_watcher &
 fi
 
-# Wait for main.py process to prevent the container from exiting
+# Wait for the main process to prevent the script from exiting
 wait $MAIN_PY_PID
