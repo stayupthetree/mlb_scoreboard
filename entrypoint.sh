@@ -17,17 +17,17 @@ copy_initial_configs() {
     if [ ! -f "$flag_file" ]; then
         if [ -f "/app/config.json.example" ]; then
             cp -n "/app/config.json.example" "/app/configs/config.json.example"
-            chown $PUID:$PGID "/app/configs/config.json"
+            chown $PUID:$PGID "/app/configs/config.json*"
         fi
 
         if [ -f "/app/colors/scoreboard.json" ]; then
             cp -n "/app/colors/scoreboard.json" "/app/configs/scoreboard.json.example"
-            chown $PUID:$PGID "/app/configs/scoreboard.json"
+            chown $PUID:$PGID "/app/configs/scoreboard.json*"
         fi
 
         if [ -f "/app/colors/teams.json.example" ]; then
             cp -n "/app/colors/teams.json.example" "/app/configs/teams.json.example"
-            chown $PUID:$PGID "/app/configs/teams.json"
+            chown $PUID:$PGID "/app/configs/teams.json*"
         fi
 
         for file in /app/coordinates/*.json /app/coordinates/*.json.example; do
@@ -38,6 +38,7 @@ copy_initial_configs() {
         done
 
         touch "$flag_file"
+        chown $PUID:$PGID "/app/configs/"
         chown $PUID:$PGID "$flag_file"
     fi
 }
