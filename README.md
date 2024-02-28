@@ -20,7 +20,7 @@ version: '3.8'
 
 services:
   scoreboard:
-    image: ghcr.io/stayupthetree/mlb_scoreboard:armv8 #change to armv7 for older pi
+    image: ghcr.io/stayupthetree/mlb_scoreboard:main
     container_name: scoreboard
     privileged: true
     devices:
@@ -65,9 +65,4 @@ The following environment variables can be set to configure the LED matrix:
 - `PARAM_LED_ROW_ADDR_TYPE` is equivalent to `--led-row-addr-type` (Row address type. Default: 0)
 - `PARAM_LED_MULTIPLEXING` is equivalent to `--led-multiplexing` (Multiplexing type. Default: 0)
 
-## Notes
-
-- For Raspberry Pi 3 and earlier models, use the `armv7` tag.
-- For Raspberry Pi 4 and later models, use the `armv8` tag.
-- Ensure that you have the necessary hardware interfaces and permissions set up on your Raspberry Pi to communicate with the LED matrix.
 
