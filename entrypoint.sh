@@ -7,7 +7,7 @@ WATCHER_ENABLED=${WATCHER_ENABLED:-false}
 PUID=${PUID:-1000}
 PGID=${PGID:-1000}
 
-echo "Watcher Enabled: $WATCHER_ENABLED" # Debug line to check the environment variable
+echo "Watcher Enabled: $WATCHER_ENABLED" # Debug line to check the environment variable.
 echo "Using PUID: $PUID, PGID: $PGID" # Debug line to confirm PUID and PGID
 
 # Function to copy initial example files to /app/configs if not already done
