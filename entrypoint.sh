@@ -131,7 +131,9 @@ start_watcher() {
         while read -r directory events filename; do
             if [[ "$filename" == "config.json" ]] || [[ "$filename" =~ w(32|64|128)h(32|64).json(.example|.sample)? ]] || [[ "$filename" == "scoreboard.json" ]]; then
                 echo "Configuration change detected: $filename"
-                restart_main_py
+                kill_main_py
+                sleep 1
+                start_main_py
             fi
         done
     else
