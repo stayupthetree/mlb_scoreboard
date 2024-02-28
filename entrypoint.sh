@@ -98,7 +98,9 @@ kill_main_py() {
         echo "Attempting to kill main.py with PID: $MAIN_PY_PID"
         if kill -0 $MAIN_PY_PID > /dev/null 2>&1; then
             echo "Killing main.py with PID: $MAIN_PY_PID"
-            kill "$MAIN_PY_PID" && wait "$MAIN_PY_PID"
+            kill "$MAIN_PY_PID"
+            # Wait for the process to terminate
+            wait "$MAIN_PY_PID" 2>/dev/null
             echo "main.py with PID: $MAIN_PY_PID has been killed."
         else
             echo "No process found with PID: $MAIN_PY_PID"
@@ -116,6 +118,7 @@ restart_main_py() {
     sleep 2
     start_main_py
 }
+
 
 # Start main.py initially
 start_main_py
