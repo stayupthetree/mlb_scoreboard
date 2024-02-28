@@ -92,21 +92,9 @@ start_main_py() {
     echo "Started main.py with PID: $MAIN_PY_PID"
 }
 
-# Function to kill main.py using the stored PID
 kill_main_py() {
     if [ ! -z "$MAIN_PY_PID" ]; then
-        echo "Attempting to kill main.py with PID: $MAIN_PY_PID"
-        if kill -0 $MAIN_PY_PID > /dev/null 2>&1; then
-            echo "Killing main.py with PID: $MAIN_PY_PID"
-            kill "$MAIN_PY_PID"
-            # Wait for the process to terminate
-            wait "$MAIN_PY_PID" 2>/dev/null
-            echo "main.py with PID: $MAIN_PY_PID has been killed."
-        else
-            echo "No process found with PID: $MAIN_PY_PID"
-        fi
-    else
-        echo "MAIN_PY_PID is unset or empty at kill attempt."
+        kill "$MAIN_PY_PID" && wait "$MAIN_PY_PID"
     fi
 }
 
