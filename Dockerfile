@@ -11,6 +11,9 @@ RUN apt-get update && apt-get install -y \
   libxslt-dev \
   libjpeg-dev \
   zlib1g-dev
+# Clone the GitHub repository
+WORKDIR /build
+RUN git clone https://github.com/MLB-LED-Scoreboard/mlb-led-scoreboard.git
 
 # Builder stage
 FROM python:3.9-slim AS builder
@@ -23,10 +26,6 @@ RUN pip install --no-cache-dir wheel
 
 # Install Python dependencies
 RUN pip install --no-cache-dir feedparser==6.0.10 'MLB_StatsAPI>=1.6.1' pyowm==3.3.0 'tzlocal==4.2' Pillow>=10.0.1
-
-# Clone the GitHub repository
-WORKDIR /build
-RUN git clone https://github.com/MLB-LED-Scoreboard/mlb-led-scoreboard.git
 
 # Set up a Python virtual environment
 RUN python3 -m venv venv
