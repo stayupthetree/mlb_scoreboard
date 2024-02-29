@@ -1,57 +1,54 @@
-# Builder stage
-FROM python:3.9-bookworm as builder
+# System dependencies stage
+FROM python:3.9 AS base
 
-# Install system and build dependencies, including Python tools and libraries
 RUN apt-get update && apt-get install -y \
-    git \
-    cmake \
-    build-essential \
-    libssl-dev \
-    libffi-dev \
-    libsdl2-dev \
-    libxml2-dev \
-    libxslt-dev \
-    libjpeg-dev \
-    zlib1g-dev \
-    python3-pip \
-    python3-dev \
-    python3-venv \
-    python3-pillow \
-    python3-tk \
-    && rm -rf /var/lib/apt/lists/*
+  build-essential \
+  libssl-dev \
+  libffi-dev \
+  libsdl2-dev \
+  libxml2-dev \
+  libxslt-dev \
+  libjpeg-dev \
+  zlib1g-dev
 
-# Set the working directory for the build stage
-WORKDIR /build
+# Builder stage
+FROM python:3.9-slim AS builder
+
+# Copy system dependencies from base stage
+COPY --from=base /usr/local/lib /usr/local/lib
+
+# Install Python tools and libraries
+RUN pip install --no-cache-dir wheel
+
+# Install Python dependencies
+RUN pip install --no-cache-dir feedparser==6.0.10 'MLB_StatsAPI>=1.6.1' pyowm==3.3.0 'tzlocal==4.2' Pillow>=10.0.1
 
 # Clone the GitHub repository
+WORKDIR /build
 RUN git clone https://github.com/MLB-LED-Scoreboard/mlb-led-scoreboard.git
 
 # Set up a Python virtual environment
 RUN python3 -m venv venv
 ENV PATH="/build/venv/bin:$PATH"
 
-# Install Python dependencies
-RUN pip install --no-cache-dir wheel
-RUN pip install --no-cache-dir feedparser==6.0.10 'MLB_StatsAPI>=1.6.1' pyowm==3.3.0 'tzlocal==4.2' Pillow>=10.0.1
-
 # Clone and build the rpi-rgb-led-matrix library
 RUN cd mlb-led-scoreboard && \
-    mkdir submodules && \
-    cd submodules && \
-    git clone https://github.com/hzeller/rpi-rgb-led-matrix.git matrix && \
-    cd matrix && \
-    make build-python PYTHON=$(which python3) -j4 && \
-    make install-python PYTHON=$(which python3) -j4
+  mkdir submodules && \
+  cd submodules && \
+  git clone https://github.com/hzeller/rpi-rgb-led-matrix.git matrix && \
+  cd matrix && \
+  make build-python PYTHON=$(which python3) -j4 && \
+  make install-python PYTHON=$(which python3) -j4
 
 # Final stage
-FROM python:3.9-bookworm
+FROM python:3.9-slim
 
-# Install runtime dependencies necessary for the application
+# Install runtime dependencies
 RUN apt-get update && apt-get install -y \
-    inotify-tools \
-    libjpeg-dev \
-    zlib1g-dev \
-    && rm -rf /var/lib/apt/lists/*
+  inotify-tools \
+  libjpeg-dev \
+  zlib1g-dev \
+  && rm -rf /var/lib/apt/lists/*
 
 # Set the working directory in the container
 WORKDIR /app
