@@ -9,7 +9,10 @@ on:
 
 jobs:
   build-docker-images:
-    runs-on: self-hosted
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        runner: [ unraid, unraid2, unraid3 ] 
     permissions:
       packages: write
       contents: read
