@@ -2,6 +2,7 @@
 FROM python:3.9 AS base
 
 RUN apt-get update && apt-get install -y \
+  git \
   build-essential \
   libssl-dev \
   libffi-dev \
