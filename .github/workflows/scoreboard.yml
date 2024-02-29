@@ -53,7 +53,7 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
-          push: ${{ github.event_name != 'pull_request' }} # Ensure we're not attempting to push on PRs
+          push: ${{ github.event_name != 'pull_request' }}  # Ensure we're not attempting to push on PRs
           platforms: ${{ env.PLATFORMS }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
