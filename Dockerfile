@@ -32,7 +32,7 @@ ENV PATH="/build/venv/bin:$PATH"
 
 # Install Python dependencies
 RUN pip install --no-cache-dir wheel
-RUN pip install --no-cache-dir feedparser==6.0.10 'MLB_StatsAPI>=1.6.1' pyowm==3.3.0 'tzlocal==4.2' Pillow>=10.0.1
+RUN pip install --no-cache-dir feedparser==6.0.10 'MLB_StatsAPI>=1.6.1' pyowm==3.3.0 'tzlocal==4.2' Pillow>=10.0.1 tzlocal==4.2
 
 # Clone and build the rpi-rgb-led-matrix library
 RUN cd mlb-led-scoreboard && \
