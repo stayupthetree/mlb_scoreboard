@@ -1,6 +1,8 @@
 name: scoreboard
 
 on:
+  schedule:
+    - cron: '*/30 * * * *'  # Run every 30 minutes to check for updates from mlb-led-scoreboard
   push:
     branches:
       - main  # Trigger on push to main branch
@@ -8,43 +10,67 @@ on:
       - 'v*'  # Trigger on tag push, assuming tags are versioned like v1.0, v2.0, etc.
 
 jobs:
+  check-mlb-updates:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    outputs:
+      should-run: ${{ steps.set-output.outputs.should-run }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Check for updates in mlb-led-scoreboard
+        id: check-updates
+        run: |
+          # Fetch the latest commit SHA from mlb-led-scoreboard's main branch
+          LATEST_COMMIT=$(curl -s \
+          https://api.github.com/repos/MLB-LED-Scoreboard/mlb-led-scoreboard/commits/main \
+          | jq -r '.sha')
+          echo "Latest commit SHA: $LATEST_COMMIT"
+          touch last_known_commit.txt  # Ensure the file exists
+          LAST_COMMIT=$(cat last_known_commit.txt || echo "")
+          
+          if [ "$LATEST_COMMIT" != "$LAST_COMMIT" ]; then
+            echo "$LATEST_COMMIT" > last_known_commit.txt
+            echo "::set-output name=should-run::true"
+          else
+            echo "::set-output name=should-run::false"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set output
+        id: set-output
+        run: echo "::set-output name=should-run::${{ steps.check-updates.outputs.should-run }}"
   build-docker-images:
+    needs: check-mlb-updates
+    if: github.event_name != 'schedule' || needs.check-mlb-updates.outputs.should-run == 'true'
     runs-on: self-hosted
     permissions:
       packages: write
       contents: read
-
     env:
       REGISTRY: ghcr.io
       IMAGE_NAME: ${{ github.repository }}
       PLATFORMS: linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6,linux/arm/v8
-
     steps:
       - name: Check out the repo
         uses: actions/checkout@v2
-
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
-
       - name: List available platforms
         run: echo ${{ steps.buildx.outputs.platforms }}
-
       - name: Log into GitHub Container Registry
         uses: docker/login-action@v1
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v3
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          # This tags the image with the GitHub SHA and the latest tag if on main branch.
           tags: |
             type=ref,event=branch
             type=ref,event=tag
@@ -54,8 +80,7 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
-          push: ${{ github.event_name != 'pull_request' }}  # Ensure we're not attempting to push on PRs
+          push: ${{ github.event_name != 'pull_request' }}
           platforms: ${{ env.PLATFORMS }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-
