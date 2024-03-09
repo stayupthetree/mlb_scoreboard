@@ -1,5 +1,5 @@
 # Builder stage
-FROM python:3.10-bookworm as builder
+FROM python:3.11-bookworm as builder
 
 # Install system and build dependencies, including Python tools and libraries
 RUN apt-get update && apt-get install -y \
@@ -44,7 +44,7 @@ RUN cd mlb-led-scoreboard && \
     make install-python PYTHON=$(which python3) -j4
 
 # Final stage
-FROM python:3.9-bookworm
+FROM python:3.11-bookworm
 
 # Install runtime dependencies necessary for the application
 RUN apt-get update && apt-get install -y \
