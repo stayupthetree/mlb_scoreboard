@@ -102,6 +102,7 @@ start_main_py() {
     done < <(env)
 
     # Start main.py with additional parameters and capture its PID
+    chown -R $PUID:$PGID "/app/configs/"
     $main_command $additional_params > /proc/1/fd/1 2>/proc/1/fd/2 &
     MAIN_PY_PID=$!
     echo "Started MLB Scoreboard with PID: $MAIN_PY_PID"
