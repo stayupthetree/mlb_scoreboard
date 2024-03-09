@@ -1,5 +1,5 @@
 # Builder stage
-FROM python:3.11-bookworm as builder
+FROM python:3.10-bookworm as builder
 
 # Install system and build dependencies, including Python tools and libraries
 RUN apt-get update && apt-get install -y \
