@@ -22,9 +22,9 @@ jobs:
       - name: Check for updates in mlb-led-scoreboard
         id: check-updates
         run: |
-          # Fetch the latest commit SHA from mlb-led-scoreboard's main branch
+          # Fetch the latest commit SHA from mlb-led-scoreboard's master branch
           LATEST_COMMIT=$(curl -s \
-          https://api.github.com/repos/MLB-LED-Scoreboard/mlb-led-scoreboard/commits/main \
+          https://api.github.com/repos/MLB-LED-Scoreboard/mlb-led-scoreboard/commits/master \
           | jq -r '.sha')
           echo "Latest commit SHA: $LATEST_COMMIT"
           touch last_known_commit.txt  # Ensure the file exists
