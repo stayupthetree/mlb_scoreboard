@@ -43,7 +43,7 @@ jobs:
   build-docker-images:
     needs: check-mlb-updates
     if: github.event_name != 'schedule' || needs.check-mlb-updates.outputs.should-run == 'true'
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     permissions:
       packages: write
       contents: read
