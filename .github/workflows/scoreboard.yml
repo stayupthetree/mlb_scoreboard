@@ -2,7 +2,7 @@ name: scoreboard
 
 on:
   schedule:
-    - cron: '*/30 * * * *'  # Run every 30 minutes to check for updates from mlb-led-scoreboard
+    - cron: '0 */6 * * *'  # Run every 6 hours to check for updates from mlb-led-scoreboard
   push:
     branches:
       - main  # Trigger on push to main branch
