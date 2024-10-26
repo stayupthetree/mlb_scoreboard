@@ -1,9 +1,42 @@
-name: scoreboard
+name: MLB LED Scoreboard
 on:
-  workflow_dispatch:  # Manual trigger only
+  workflow_dispatch:  # Manual trigger for Docker build
+  push:
+    branches:
+      - main        # Auto versioning on main branch pushes
 
 jobs:
+  # Version bumping job
+  version-bump:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Needed for creating tags and releases
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Important for getting all tags and history
+      
+      - name: Bump version and push tag
+        id: tag_version
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          default_bump: patch
+          release_branches: main
+          fetch_all_tags: true
+      
+      - name: Create a GitHub release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ steps.tag_version.outputs.new_tag }}
+          name: Release ${{ steps.tag_version.outputs.new_tag }}
+          body: ${{ steps.tag_version.outputs.changelog }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  # Docker build job
   build-docker-images:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       packages: write
