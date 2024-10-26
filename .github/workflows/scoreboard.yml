@@ -1,13 +1,12 @@
 name: scoreboard
-
 on:
   schedule:
-    - cron: '0 */6 * * *'  # Run every 6 hours to check for updates from mlb-led-scoreboard
+    - cron: '0 */6 * * *'
   push:
     branches:
-      - main  # Trigger on push to main branch
+      - main
     tags:
-      - 'v*'  # Trigger on tag push, assuming tags are versioned like v1.0, v2.0, etc.
+      - 'v*'
   workflow_dispatch:
 
 jobs:
@@ -16,21 +15,19 @@ jobs:
     if: github.event_name == 'schedule'
     outputs:
       should-run: ${{ steps.check-updates.outputs.should-run }}
+      mlb_commit: ${{ steps.check-updates.outputs.mlb_commit }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
       - name: Check for updates in mlb-led-scoreboard
         id: check-updates
         run: |
-          # Fetch the latest commit SHA from mlb-led-scoreboard's master branch
           LATEST_COMMIT=$(curl -s \
           https://api.github.com/repos/MLB-LED-Scoreboard/mlb-led-scoreboard/commits/master \
           | jq -r '.sha')
           echo "Latest commit SHA: $LATEST_COMMIT"
-          touch last_known_commit.txt  # Ensure the file exists
-          LAST_COMMIT=$(cat last_known_commit.txt || echo "")
+          echo "mlb_commit=$LATEST_COMMIT" >> $GITHUB_OUTPUT
           
-          if [ "$LATEST_COMMIT" != "$LAST_COMMIT" ]; then
+          # Check if build is needed
+          if [ ! -f "last_known_commit.txt" ] || [ "$LATEST_COMMIT" != "$(cat last_known_commit.txt)" ]; then
             echo "$LATEST_COMMIT" > last_known_commit.txt
             echo "should-run=true" >> $GITHUB_OUTPUT
           else
@@ -38,7 +35,6 @@ jobs:
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_OUTPUT: ${{ github.output }}
 
   build-docker-images:
     needs: check-mlb-updates
@@ -50,7 +46,8 @@ jobs:
     env:
       REGISTRY: ghcr.io
       IMAGE_NAME: ${{ github.repository }}
-      PLATFORMS: linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6,linux/arm/v8
+      PLATFORMS: linux/amd64,linux/arm64,linux/arm/v7
+
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
@@ -60,7 +57,12 @@ jobs:
       
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
+        with:
+          driver-opts: |
+            image=moby/buildkit:master
+            network=host
+      
+      # Enhanced caching setup
       - name: Cache Docker layers
         uses: actions/cache@v4
         with:
@@ -68,7 +70,6 @@ jobs:
           key: ${{ runner.os }}-buildx-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-buildx-
-          save-always: true
       
       - name: Log into GitHub Container Registry
         uses: docker/login-action@v3
@@ -86,6 +87,7 @@ jobs:
             type=ref,event=branch
             type=ref,event=tag
             type=semver,pattern={{version}}
+            type=sha,prefix=,suffix=,format=short
       
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -97,4 +99,13 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
+            MLB_COMMIT_HASH=${{ needs.check-mlb-updates.outputs.mlb_commit }}
+      
+      # Move cache
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
