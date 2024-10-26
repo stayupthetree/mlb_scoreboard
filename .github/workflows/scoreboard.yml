@@ -8,14 +8,14 @@ on:
 jobs:
   # Version bumping job
   version-bump:
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: write  # Needed for creating tags and releases
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Important for getting all tags and history
+          fetch-depth: 0
       
       - name: Bump version and push tag
         id: tag_version
@@ -36,7 +36,6 @@ jobs:
 
   # Docker build job
   build-docker-images:
-    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       packages: write
