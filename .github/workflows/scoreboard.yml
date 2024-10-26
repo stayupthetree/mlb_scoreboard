@@ -37,9 +37,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build-docker-images:
-    needs: check-mlb-updates
-    if: github.event_name != 'schedule' || needs.check-mlb-updates.outputs.should-run == 'true'
     runs-on: ubuntu-latest
+    needs: check-mlb-updates
+    if: >
+      github.event_name != 'schedule' ||
+      (github.event_name == 'schedule' && needs.check-mlb-updates.outputs.should-run == 'true')
     permissions:
       packages: write
       contents: read
@@ -47,22 +49,25 @@ jobs:
       REGISTRY: ghcr.io
       IMAGE_NAME: ${{ github.repository }}
       PLATFORMS: linux/amd64,linux/arm64,linux/arm/v7
-
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
+      
+      - name: Set MLB commit hash
+        id: set-mlb-commit
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "MLB_COMMIT=${{ needs.check-mlb-updates.outputs.mlb_commit }}" >> $GITHUB_OUTPUT
+          else
+            echo "MLB_COMMIT=master" >> $GITHUB_OUTPUT
+          fi
       
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        with:
-          driver-opts: |
-            image=moby/buildkit:master
-            network=host
       
-      # Enhanced caching setup
       - name: Cache Docker layers
         uses: actions/cache@v4
         with:
@@ -102,9 +107,8 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
           build-args: |
             BUILDKIT_INLINE_CACHE=1
-            MLB_COMMIT_HASH=${{ needs.check-mlb-updates.outputs.mlb_commit }}
+            MLB_COMMIT_HASH=${{ steps.set-mlb-commit.outputs.MLB_COMMIT }}
       
-      # Move cache
       - name: Move cache
         run: |
           rm -rf /tmp/.buildx-cache
