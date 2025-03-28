@@ -16,8 +16,6 @@ First, ensure you have Docker and Docker Compose installed on your system. Clone
 Below is the `docker-compose.yml` file configured for this service:
 
 ```yaml
-version: '3.8'
-
 services:
   scoreboard:
     image: ghcr.io/stayupthetree/mlb_scoreboard:main
