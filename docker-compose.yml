@@ -1,7 +1,7 @@
 services:
   scoreboard:
-    image: ghcr.io/stayupthetree/mlb_scoreboard:main #change to armv7 for older pi
-    container_name: scoreboard
+    image: ghcr.io/stayupthetree/mlb_scoreboard:main
+    container_name: mlb-scoreboard
     privileged: true
     devices:
       - /dev/gpiomem:/dev/gpiomem
