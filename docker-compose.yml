@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   scoreboard:
     image: ghcr.io/stayupthetree/mlb_scoreboard:main #change to armv7 for older pi
@@ -11,9 +9,16 @@ services:
       - ./config:/app/configs
     environment:
       - WATCHER_ENABLED=true
+      # Set to true to enable emulation mode (no LED hardware required)
+      - EMULATED=false
+      # LED matrix configuration parameters
       - PARAM_LED_GPIO_MAPPING=adafruit-hat-pwm
       - PARAM_LED_BRIGHTNESS=20
       - PARAM_LED_SLOWDOWN_GPIO=4
       - PARAM_LED_COLS=64
       - PARAM_LED_ROWS=32
       - TZ=America/New_York
+    # Uncomment to enable a web server for emulator mode
+    # ports:
+    #   - "8888:8888"
+    restart: unless-stopped
