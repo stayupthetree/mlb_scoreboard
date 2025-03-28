@@ -18,6 +18,7 @@ RUN apt-get update && apt-get install -y \
     python3-venv \
     python3-pillow \
     python3-tk \
+    cython3 \
     && rm -rf /var/lib/apt/lists/*
 
 # Set the working directory for the build stage
