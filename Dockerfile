@@ -1,5 +1,5 @@
 # Builder stage
-FROM python:3.12-bookworm as builder
+FROM python:3.11-bookworm as builder
 # Install system and build dependencies, including Python tools and libraries
 RUN apt-get update && apt-get install -y \
     git \
@@ -38,7 +38,7 @@ RUN mkdir submodules && \
     make build-python PYTHON=$(which python3) -j4 && \
     make install-python PYTHON=$(which python3) -j4
 # Final stage
-FROM python:3.12-bookworm
+FROM python:3.11-bookworm
 # Install runtime dependencies necessary for the application
 RUN apt-get update && apt-get install -y \
     inotify-tools \
