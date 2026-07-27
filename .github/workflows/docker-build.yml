@@ -96,7 +96,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             # Default tags for all builds
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=ref,event=branch
             type=sha,prefix=,suffix=,format=short
             type=semver,pattern={{version}},value=${{ needs.version-bump.outputs.new_version }},enable=${{ needs.version-bump.result == 'success' }}
@@ -106,9 +106,9 @@ jobs:
             type=raw,value=linux-amd64,enable=${{ matrix.platform == 'linux/amd64' }}
             type=raw,value=linux-arm64,enable=${{ matrix.platform == 'linux/arm64' }}
             type=raw,value=linux-arm-v7,enable=${{ matrix.platform == 'linux/arm/v7' }}
-            type=raw,value=linux-amd64-latest,enable=${{ matrix.platform == 'linux/amd64' && is_default_branch }}
-            type=raw,value=linux-arm64-latest,enable=${{ matrix.platform == 'linux/arm64' && is_default_branch }}
-            type=raw,value=linux-arm-v7-latest,enable=${{ matrix.platform == 'linux/arm/v7' && is_default_branch }}
+            type=raw,value=linux-amd64-latest,enable=${{ matrix.platform == 'linux/amd64' && github.ref == 'refs/heads/main' }}
+            type=raw,value=linux-arm64-latest,enable=${{ matrix.platform == 'linux/arm64' && github.ref == 'refs/heads/main' }}
+            type=raw,value=linux-arm-v7-latest,enable=${{ matrix.platform == 'linux/arm/v7' && github.ref == 'refs/heads/main' }}
             type=raw,value=linux-amd64-{{sha}},enable=${{ matrix.platform == 'linux/amd64' }}
             type=raw,value=linux-arm64-{{sha}},enable=${{ matrix.platform == 'linux/arm64' }}
             type=raw,value=linux-arm-v7-{{sha}},enable=${{ matrix.platform == 'linux/arm/v7' }}
