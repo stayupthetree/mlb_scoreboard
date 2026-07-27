@@ -18,7 +18,7 @@ Below is the `docker-compose.yml` file configured for this service:
 ```yaml
 services:
   scoreboard:
-    image: ghcr.io/stayupthetree/mlb_scoreboard:main
+    image: ghcr.io/stayupthetree/mlb_scoreboard:latest
     container_name: scoreboard
     privileged: true
     devices:
@@ -37,6 +37,52 @@ services:
       - TZ=America/New_York
     restart: unless-stopped
 ```
+
+### Docker Image Tags
+
+The Docker images are available with the following tags:
+
+#### Multi-Architecture Tags
+- `:latest` - Most recent multi-architecture build (recommended)
+- `:v1.2.3` - Specific version (semantic versioning)
+- `:v1.2` - Major.minor version
+- `:v1` - Major version only
+- `:main` - Latest build from main branch
+
+#### Platform-Specific Tags
+For specific architecture optimization, use these tags:
+- `:linux-amd64` - AMD64/x86_64 architecture
+- `:linux-arm64` - ARM64/v8 architecture (modern Raspberry Pi)
+- `:linux-arm-v7` - ARMv7 architecture (older Raspberry Pi)
+
+#### Versioned Platform Tags
+- `:linux-amd64-v1.2.3` - Specific version for AMD64
+- `:linux-arm64-v1.2.3` - Specific version for ARM64
+- `:linux-arm-v7-v1.2.3` - Specific version for ARMv7
+
+#### Commit-Specific Tags
+- `:sha-abc1234` - Specific commit build
+
+**Usage Example for ARM64:**
+```yaml
+services:
+  scoreboard:
+    image: ghcr.io/stayupthetree/mlb_scoreboard:linux-arm64
+```
+
+**Usage Example for Specific Version:**
+```yaml
+services:
+  scoreboard:
+    image: ghcr.io/stayupthetree/mlb_scoreboard:v1.2.3
+```
+
+### Choosing the Right Tag
+
+- **For most users**: Use `:latest` for automatic updates
+- **For production**: Use versioned tags like `:v1.2.3` for stability
+- **For specific hardware**: Use platform tags if you want to optimize for your architecture
+- **For testing**: Use `:main` or commit-specific tags for testing development builds
 
 ## Environment Variables
 

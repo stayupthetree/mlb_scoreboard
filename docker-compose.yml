@@ -1,6 +1,10 @@
 services:
   scoreboard:
-    image: ghcr.io/stayupthetree/mlb_scoreboard:main
+    # Available tags: latest, v1.2.3, linux-arm64, linux-arm-v7, linux-amd64
+    # For Raspberry Pi 4/5: use linux-arm64 or latest
+    # For Raspberry Pi 3/Zero 2: use linux-arm-v7
+    # See README.md for complete tag documentation
+    image: ghcr.io/stayupthetree/mlb_scoreboard:latest
     container_name: mlb-scoreboard
     privileged: true
     devices:
